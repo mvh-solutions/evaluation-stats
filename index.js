@@ -104,3 +104,68 @@ for (const translator of Object.keys(betters['all'])) {
         console.log();
     }
 }
+
+const noteScores = {};
+for (const evaluation of evaluations) {
+    if (!noteScores[evaluation["noteId"]]) {
+        noteScores[evaluation["noteId"]] = {};
+    }
+    for (const metric of ['sense', 'style', 'level']) {
+        const winner = evaluation["best"][metric];
+        if (winner === 'SAME') {
+            continue;
+        }
+        if (!noteScores[evaluation["noteId"]][winner]) {
+            noteScores[evaluation["noteId"]][winner] = 0;
+        }
+        noteScores[evaluation["noteId"]][winner]++;
+    }
+}
+
+const lowestScorers = {};
+const highestScorers = {};
+for (const [note, scores] of Object.entries(noteScores)) {
+    const lowestScore = Object.values(scores).sort((a, b) => a - b)[0];
+    lowestScorers[note] = Object.entries(scores)
+        .filter(e => e[1] === lowestScore)
+        .map(e => e[0]);
+    const highestScore = Object.values(scores).sort((a, b) => b - a)[0];
+    highestScorers[note] = Object.entries(scores)
+        .filter(e => e[1] === highestScore)
+        .map(e => e[0]);
+}
+
+const lowScoreFrequency = {};
+const highScoreFrequency = {};
+for (const lowestScorerList of Object.values(lowestScorers)) {
+    for (const lowestScorer of lowestScorerList) {
+        if (!lowScoreFrequency[lowestScorer]) {
+            lowScoreFrequency[lowestScorer] = 0
+        }
+        lowScoreFrequency[lowestScorer]++;
+    }
+}
+for (const highestScorerList of Object.values(highestScorers)) {
+    for (const highestScorer of highestScorerList) {
+        if (!highScoreFrequency[highestScorer]) {
+            highScoreFrequency[highestScorer] = 0
+        }
+        highScoreFrequency[highestScorer]++;
+    }
+}
+
+console.log(`# Best scores across notes`);
+console.log();
+
+for (const translator of Object.entries(highScoreFrequency).sort((a, b) => b[1] - a[1]).map(e => e[0])) {
+    console.log(`- ${translator}: ${highScoreFrequency[translator]}`);
+    console.log();
+}
+
+console.log(`# Worst scores across notes`);
+console.log();
+
+for (const translator of Object.entries(lowScoreFrequency).sort((a, b) => b[1] - a[1]).map(e => e[0])) {
+    console.log(`- ${translator}: ${lowScoreFrequency[translator]}`);
+    console.log();
+}
