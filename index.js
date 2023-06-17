@@ -40,16 +40,20 @@ for (const evaluation of evaluations) {
         betters["all"][evaluation.best[metric]]++;
     }
 }
+
 for (const metric of ['sense', 'style', 'level', 'all']) {
     console.log(`## ${metric}`);
     console.log();
     for (const [metricKey, metricValue] of Object.entries(betters[metric]).sort((a, b) => b[1] - a[1])) {
-        console.log(`- ${metricKey}: ${metricValue}`);
+        console.log(`- **${metricKey}**: ${metricValue}`);
         console.log();
     }
 }
+
 console.log(`# Pair comparisons (win/tie/lose)`);
 console.log();
+
+const totalComparisons = {};
 for (const translator of Object.keys(betters['all'])) {
     console.log(`## ${translator}`);
     console.log();
@@ -61,6 +65,13 @@ for (const translator of Object.keys(betters['all'])) {
         const otherTranslation = evaluation.translations.filter(t => t !== translator)[0];
         if (!pairComparisons[otherTranslation]) {
             pairComparisons[otherTranslation] = {};
+        }
+        if (!totalComparisons[translator]) {
+            totalComparisons[translator] = {
+                win: 0,
+                tie: 0,
+                lose: 0
+            };
         }
         for (const metric of ['sense', 'style', 'level', 'all']) {
             if (!pairComparisons[otherTranslation][metric]) {
@@ -75,12 +86,15 @@ for (const translator of Object.keys(betters['all'])) {
             switch (evaluation.best[metric]) {
                 case "SAME":
                     pairComparisons[otherTranslation][metric]['tie']++;
+                    totalComparisons[translator]['tie']++;
                     break;
                 case translator:
                     pairComparisons[otherTranslation][metric]['win']++;
+                    totalComparisons[translator]['win']++;
                     break;
                 default:
                     pairComparisons[otherTranslation][metric]['lose']++;
+                    totalComparisons[translator]['lose']++;
             }
         }
     }
@@ -95,14 +109,24 @@ for (const translator of Object.keys(betters['all'])) {
         }
     }
     for (const [otherTranslation, otherTranslationStats] of Object.entries(pairComparisons)) {
-        console.log(`### vs ${otherTranslation}: (${otherTranslationStats['sense']['win']+otherTranslationStats['sense']['tie']+otherTranslationStats['sense']['lose']})`);
+        console.log(`vs **${otherTranslation}**: (${otherTranslationStats['sense']['win']+otherTranslationStats['sense']['tie']+otherTranslationStats['sense']['lose']})`);
         console.log();
         for (const metric of ['sense', 'style', 'level', 'all']) {
-            console.log(`- ${metric} - ${otherTranslationStats[metric]['win']}/${otherTranslationStats[metric]['tie']}/${otherTranslationStats[metric]['lose']}`)
+            console.log(`- *${metric}* - ${otherTranslationStats[metric]['win']} / ${otherTranslationStats[metric]['tie']} / ${otherTranslationStats[metric]['lose']}`)
             console.log();
         }
         console.log();
     }
+}
+
+console.log(`# Better/Tie/Worse`);
+console.log();
+
+for (const [translator, scores] of Object.entries(totalComparisons).sort((a, b) => b[1]['win'] - a[1]['win'])) {
+    const totalScores = scores['win'] + scores ['tie'] + scores['lose'];
+    console.log(`- **${translator}**: ${scores['win']} / ${scores['tie']} / ${scores['lose']} ( ${Math.round((scores['win'] * 100)/totalScores)}% / ${Math.round((scores['tie'] * 100)/totalScores)}% / ${Math.round((scores['lose'] * 100)/totalScores)}% )`);
+    console.log();
+
 }
 
 const noteScores = {};
@@ -158,7 +182,7 @@ console.log(`# Best scores across notes`);
 console.log();
 
 for (const translator of Object.entries(highScoreFrequency).sort((a, b) => b[1] - a[1]).map(e => e[0])) {
-    console.log(`- ${translator}: ${highScoreFrequency[translator]}`);
+    console.log(`- **${translator}**: ${highScoreFrequency[translator]}`);
     console.log();
 }
 
@@ -166,6 +190,6 @@ console.log(`# Worst scores across notes`);
 console.log();
 
 for (const translator of Object.entries(lowScoreFrequency).sort((a, b) => b[1] - a[1]).map(e => e[0])) {
-    console.log(`- ${translator}: ${lowScoreFrequency[translator]}`);
+    console.log(`- **${translator}**: ${lowScoreFrequency[translator]}`);
     console.log();
 }
